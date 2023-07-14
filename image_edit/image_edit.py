@@ -5,10 +5,9 @@ import reflex as rx
 from typing import List
 import os
 from localStoragePy import localStoragePy
-import json
+import json   
 
 localStorage = localStoragePy('image_edit', 'storage_backend')
-
 options: List[str] = [
     "LAB",
     "HSV",
@@ -18,6 +17,7 @@ options: List[str] = [
     "BayerGBRG",
     "NV21"
 ]
+
 def image_box(filename: str):
     return rx.center(
         rx.vstack(
@@ -28,49 +28,54 @@ def image_box(filename: str):
     )
 
 class State(rx.State):
-    """The app state."""
     is_uploading: bool
-    imgs : List[str] = localStorage.getItem("images")
-    img : list[str]
     option: str = "No selection yet."
-
-    color: List[str] = [
-        "red",
-        "green",
-        "blue",
-        "yellow",
-        "orange",
-        "purple",
-    ]
-
+    img: str = "ex_gfp_fungi.jpg"
     imgs: List[str] = [
         "another_random.jpg",
     ]
-    img: str = ""
+    all_image_paths : str
+    
+    # this is a computed var that cant be modified
     @rx.var
     def file_list(self) -> str:
         """Get the names of each file as a list of strings."""
-        self.uploaded_images = os.listdir(rx.get_asset_path())
         return os.listdir(rx.get_asset_path())
-    @rx.var
-    def get_imgs(self) -> List[str]:
-        return self.imgs
-
-        """
-        when u handle upload, get everything from local storage and add urs to the list
-        reput to local storage
-        the state var should update automatically
-        """
     
-    def update_image_list(self):
-        print("old: ", self.imgs)
-        print("localStorage", localStorage.getItem("images"))
+    #helpful button to clear local storage
+    def clear_local_storage(self):
+        localStorage.clear()
+        return
+    
+    #helpful button to display local storage
+    def check_local_storage(self):
         storedList = localStorage.getItem("images")
+        storedList = storedList.replace('"', '')
         res = storedList.strip('][').split(', ')
-        newItem = res[-1]
-        newItem = newItem.replace('"', '')
-        self.img = newItem
-        self.imgs.append(newItem)
+        for i in range(0, len(res)):
+            res[i] = res[i].replace(" ", "")
+        self.all_image_paths = res
+        return 
+    
+    @rx.var
+    def get_local_storage_dir(self) -> str:
+        return "\n\n".join(self.all_image_paths)
+
+    def update_image_list(self):
+        storedList = localStorage.getItem("images")
+        try:
+            res = storedList.strip('][').split(', ')
+            newItem = res[-1]
+            newItem = newItem.replace('"', '')
+            self.img = newItem
+
+            for item in self.imgs:
+                print(item)
+                if item == newItem:
+                    return
+            self.imgs.append(newItem)
+        except:
+            print("nothing in local storage")
 
     async def handle_upload(self, files: List[rx.UploadFile]):
         """Handle the upload of file(s).
@@ -98,73 +103,120 @@ class State(rx.State):
             print("dump it allll", json.dumps(tempList)) #templist is updating properly
             localStorage.setItem("images", json.dumps(tempList))
             State.imgs = localStorage.getItem("images")
-    
+        
     async def stop_upload(self):
         """Stop the file upload."""
         await asyncio.sleep(1)
         self.is_uploading = False
 
-
-def colored_box(color: str):
-    return rx.box(rx.text(color))
-
-def index() -> rx.Component:
+def index():
     return rx.center(
-        rx.button(
-                "Check local storage",
-                height="70px",
-                width="200px",
-                on_click=State.update_image_list,
-                padding="1.5em",
-                margin_bottom="2em",
-            ),
         rx.vstack(
-            rx.color_mode_button(rx.color_mode_icon(), float="right"),
-            rx.heading("Welcome to Image Theory!", font_size="2em"),
-            rx.text("What does your image look like in another color space?"),
-            rx.image(src=State.img, width="auto", height="200px"),
-    rx.responsive_grid(
-                rx.foreach(State.imgs, image_box),
-                columns=[2, 4, 6],
-    ),
-            rx.upload(
-                    rx.button(
-                            "Select File(s)",
-                            color="purple",
-                            bg="white",
-                            text_align="center",
-                            border="1px dotted black",
-                            padding="1.0em",
-                            margin_top = "0.5em",
-                            margin_bottom = "0.5em"
+            #main header (3)
+            rx.vstack(                
+                rx.color_mode_button(rx.color_mode_icon(), float="center"),
+                rx.heading("Welcome to Image Theory!", font_size="5em"),
+                rx.text("What does your image look like in another color space?",
+                        background_image="linear-gradient(271.3deg, #4500FF 15%, #FF0000 30%, #FFD100 30%, #00FFEE 70%, #FF00FB 15%)",
+                        background_clip="text",
+                        font_size="3em"
+                ),
+                padding_top="5%"
+            ),
+            #upload image and change color space left and right
+            rx.hstack(
+                #upload image left stack
+                rx.vstack(
+                    rx.image(src=State.img, width="auto", height="300px"),
+                    rx.upload(
+                        rx.button(
+                                "Select File(s)",
+                                color="purple",
+                                bg="white",
+                                text_align="center",
+                                border="1px dotted black",
+                                padding="1.0em",
+                                margin_top = "0.5em",
+                                margin_bottom = "0.5em"
                         ),
-            text_align="center",
+                        text_align="center",
+                    ),
+                    rx.button(
+                        "Upload",
+                        height="70px",
+                        width="200px",
+                        on_click=lambda: State.handle_upload(rx.upload_files()),
+                        padding="1.5em",
+                        margin_bottom="2em",
+                    ),
+                    padding_right = "30%"
+                ),
+                
+                #change diff color space right stack
+                rx.vstack(
+                    rx.select(
+                        options,
+                        placeholder="Select a color space.",
+                        value=State.option,
+                        on_change=State.set_option, #we havent define this, so does it do anything? update_image
+                        width = "200px", 
+                        height = "auto",
+                    
+                    ),
+                        rx.text(State.option),  
+                        spacing="1.5em",
+                        font_size="1.5em",
+                        padding_bottom="10%",
+                ),
             ),
-            rx.button(
-                "Upload",
-                height="70px",
-                width="200px",
-                on_click=lambda: State.handle_upload(rx.upload_files()),
-                padding="1.5em",
-                margin_bottom="2em",
+
+            #see grid view of all images
+            rx.center(
+                rx.vstack(            
+                    rx.text("All uploaded images", font_size="3em"),
+                    rx.responsive_grid(
+                        rx.foreach(State.imgs, image_box),
+                        columns=[2, 4, 6],
+                    ),
+                ),
+                padding_top = "5%"
             ),
-            rx.select(
-                options,
-                placeholder="Select a color space.",
-                value=State.option,
-                on_change=State.set_option, #we havent define this, so does it do anything? update_image
+            #helpful buttons
+            rx.hstack(
+                rx.vstack(
+                    rx.text("Something not working? Try clearing your local storage"),
+                                rx.button(
+                            "Clear local storage",
+                            height="70px",
+                            width="200px",
+                            on_click=State.clear_local_storage,
+                            padding="1.5em",
+                            margin_bottom="2em",
+                        ),
+                        border="1px dotted black",
+                        padding="1.5em",
+                ), 
+                rx.vstack(
+                    rx.text("Going back to an old pic? Find the full list here then copy/paste the filename to the editor."),
+                    rx.button(
+                        "Check local storage",
+                        height="70px",
+                        width="200px",
+                        on_click=State.check_local_storage,
+                        padding="1.5em",
+                        margin_bottom="2em",
+                    ),
+                    rx.text(State.get_local_storage_dir),
+                    border="1px dotted black",
+                    padding="1.5em",
+                ),
+                padding_bottom="0.5em"
             ),
-            rx.text(State.option),  
-            spacing="1.5em",
-            font_size="2em",
-            padding_top="10%",
-        )
+        ),
+        bg="#FFFBE8",
     )
 
 
-
-
-# Add state and page to the app.
 app = rx.App(state=State)
 app.add_page(index)
 app.compile()

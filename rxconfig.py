@@ -8,10 +8,3 @@ config = ImageeditConfig(
     db_url="sqlite:///reflex.db",
     env=rx.Env.DEV,
 )
-
-
-
-# rx.responsive_grid(
-# rx.foreach(State.file_list, image_box),
-# columns=[2, 4, 6],
-# ),
