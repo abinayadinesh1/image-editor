@@ -48,21 +48,56 @@ class State(rx.State):
         return
     
     #helpful button to display local storage
-    def check_local_storage(self):
-        storedList = localStorage.getItem("images")
-        storedList = storedList.replace('"', '')
-        res = storedList.strip('][').split(', ')
-        for i in range(0, len(res)):
-            res[i] = res[i].replace(" ", "")
-        self.all_image_paths = res
+    def update_local_storage(self):
+        # storedList = localStorage.getItem("images")
+        # storedList = storedList.replace('"', '')
+        # res = storedList.strip('][').split(', ')
+        # for i in range(0, len(res)):
+        #     res[i] = res[i].replace(" ", "")
+        # self.all_image_paths = res
         return 
     
     @rx.var
     def get_local_storage_dir(self) -> str:
         return "\n\n".join(self.all_image_paths)
+    
+    @rx.var
+    def get_local_storage_dir_list(self) -> List[str]:
+        computedLocalStorageDir: List[str] = []
+        for item in self.all_image_paths:
+            computedLocalStorageDir.append(item)
+        print("computedLocalStorageDir", computedLocalStorageDir)
+        print("self.all_image_paths", self.all_image_paths)
+        return computedLocalStorageDir
 
+    async def handle_upload(self, files: List[rx.UploadFile]):
+        for file in files:
+            upload_data = await file.read()
+            outfile = rx.get_asset_path(file.filename)
+
+            # Save the file.
+            with open(outfile, "wb") as file_object:
+                file_object.write(upload_data)
+            tempList = self.imgs
+            try: 
+                print("old list", tempList)
+                tempList.append(file.filename)
+            except: 
+                print("must start tempList from scratch")
+                tempList = [file.filename]
+            print("dump it allll", json.dumps(tempList)) #templist is updating properly
+            localStorage.setItem("images", json.dumps(tempList))
+            self.imgs = localStorage.getItem("images")
+            self.update_local_storage()
+            self.update_image_list()
+    
     def update_image_list(self):
         storedList = localStorage.getItem("images")
+        # storedList = storedList.replace('"', '')
+        # res = storedList.strip('][').split(', ')
+        # for i in range(0, len(res)):
+        #     res[i] = res[i].replace(" ", "")
+        # self.all_image_paths = res
         try:
             res = storedList.strip('][').split(', ')
             newItem = res[-1]
@@ -77,33 +112,6 @@ class State(rx.State):
         except:
             print("nothing in local storage")
 
-    async def handle_upload(self, files: List[rx.UploadFile]):
-        """Handle the upload of file(s).
-
-
-        Args:
-            files: The uploaded files.
-        """
-        for file in files:
-            upload_data = await file.read()
-            outfile = rx.get_asset_path(file.filename)
-
-
-            # Save the file.
-            with open(outfile, "wb") as file_object:
-                file_object.write(upload_data)
-            tempList = self.imgs
-            try: 
-                print("old list", tempList)
-                tempList.append(file.filename)
-            except: 
-                print("must start tempList from scratch")
-                tempList = [file.filename]
-            print("new templist", print)
-            print("dump it allll", json.dumps(tempList)) #templist is updating properly
-            localStorage.setItem("images", json.dumps(tempList))
-            State.imgs = localStorage.getItem("images")
-        
     async def stop_upload(self):
         """Stop the file upload."""
         await asyncio.sleep(1)
@@ -111,6 +119,7 @@ class State(rx.State):
 
 def index():
     return rx.center(
+        rx.text(State.get_local_storage_dir),
         rx.vstack(
             #main header (3)
             rx.vstack(                
@@ -174,10 +183,10 @@ def index():
             rx.center(
                 rx.vstack(            
                     rx.text("All uploaded images", font_size="3em"),
-                    rx.responsive_grid(
-                        rx.foreach(State.imgs, image_box),
-                        columns=[2, 4, 6],
-                    ),
+                    # rx.responsive_grid(
+                    #     rx.foreach(State.imgs, image_box),
+                    #     columns=[2, 4, 6],
+                    # ),
                 ),
                 padding_top = "5%"
             ),
@@ -202,7 +211,7 @@ def index():
                         "Check local storage",
                         height="70px",
                         width="200px",
-                        on_click=State.check_local_storage,
+                        on_click=State.update_local_storage,
                         padding="1.5em",
                         margin_bottom="2em",
                     ),
@@ -213,7 +222,7 @@ def index():
                 padding_bottom="0.5em"
             ),
         ),
-        bg="#FFFBE8",
+        # bg="#FFFBE8",
     )
 
 
