@@ -30,12 +30,12 @@ def image_box(filename: str):
 # must fix style for buttons
 light_style = {
     "background_image": "light_mode.png", 
-    "font_family": "Comic Sans MS",
+    "font_family": "Noto Sans",
     "color": "black",
 }
 dark_style = {
     "background_image": "dark_mode.png", 
-    "font_family": "Comic Sans MS",
+    "font_family": "Noto Sans",
     "color": "white",
 }
 def cvt_str_to_list(initStr) -> List[str]:
@@ -133,7 +133,7 @@ def index():
                 rx.button("dark", 
                             background_image="moon.png",
                             on_click=State.toggle_mode()),
-                rx.heading("Image Theory!", font_size="5em"),
+                rx.heading("Image Theory", font_size="5em"),
                 rx.image(src="text4.png", width = "auto", height = "auto"),
                 padding_top="2%",
             ),
@@ -146,9 +146,9 @@ def index():
                     rx.upload(
                         rx.button(
                                 "Select File(s)",
-                                color="purple",
-                                bg="white",
-                                text_align="center",
+                                color="black",
+                                bg="rgb(230, 230, 230)",
+                                text_align="left",
                                 border="1px dotted black",
                                 padding="1.0em",
                                 margin_top = "0.5em",
@@ -161,6 +161,8 @@ def index():
                         height="70px",
                         width="200px",
                         on_click=lambda: State.handle_upload(rx.upload_files()),
+                        border="1px dashed black",
+                        bg="rgb(230, 230, 230)",
                         padding="1.5em",
                         margin_bottom="2em",
                     ),
@@ -176,6 +178,10 @@ def index():
                         on_change=State.set_option, #we havent define this, so does it do anything? update_image
                         width = "200px", 
                         height = "auto",
+                        color="black",
+                        bg="rgb(230, 230, 230)",
+                        text_align="center",
+                        border="1px dotted black",
                     
                     ),
                         rx.text(State.option),  
@@ -207,6 +213,8 @@ def index():
                             on_click=State.dummy,
                             padding="1.5em",
                             margin_bottom="2em",
+                            border="1px dashed black",
+                        bg="rgb(230, 230, 230)",
                         ),
                         border="1px dotted black",
                         padding="1.5em",
@@ -220,6 +228,8 @@ def index():
                         on_click=State.dummy,
                         padding="1.5em",
                         margin_bottom="2em",
+                        border="1px dashed black",
+                        bg="rgb(230, 230, 230)",
                     ),
                     border="1px dotted black",
                     padding="1.5em",
@@ -248,9 +258,9 @@ def index():
                     rx.upload(
                         rx.button(
                                 "Select File(s)",
-                                color="purple",
-                                bg="white",
-                                text_align="center",
+                                color="white",
+                                bg="rgb(4, 15, 113)",
+                                text_align="left",
                                 border="1px dotted black",
                                 padding="1.0em",
                                 margin_top = "0.5em",
@@ -263,6 +273,8 @@ def index():
                         height="70px",
                         width="200px",
                         on_click=lambda: State.handle_upload(rx.upload_files()),
+                        border="1px dashed black",
+                        bg="rgb(4, 15, 113)",
                         padding="1.5em",
                         margin_bottom="2em",
                     ),
@@ -278,6 +290,10 @@ def index():
                         on_change=State.set_option, #we havent define this, so does it do anything? update_image
                         width = "200px", 
                         height = "auto",
+                        color="white",
+                        bg="rgb(4, 15, 113)",
+                        text_align="center",
+                        border="1px dotted black",
                     
                     ),
                         rx.text(State.option),  
@@ -310,7 +326,7 @@ def index():
                             padding="1.5em",
                             margin_bottom="2em",
                         ),
-                        border="1px dotted black",
+                        border="1px dotted white",
                         padding="1.5em",
                 ), 
                 rx.vstack(
@@ -323,7 +339,7 @@ def index():
                         padding="1.5em",
                         margin_bottom="2em",
                     ),
-                    border="1px dotted black",
+                    border="1px dotted white",
                     padding="1.5em",
                 ),
                 padding_bottom="0.5em"
