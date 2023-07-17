@@ -8,6 +8,7 @@ from localStoragePy import localStoragePy
 import json   
 
 localStorage = localStoragePy('image_edit', 'storage_backend')
+localStorage.setItem('images', [])
 options: List[str] = [
     "LAB",
     "HSV",
@@ -37,22 +38,33 @@ dark_style = {
     "font_family": "Comic Sans MS",
     "color": "white",
 }
+def cvt_str_to_list(initStr) -> List[str]:
+    parsed = initStr.strip('][').split(', ')
+    for i in range(0, len(parsed)):
+        parsed[i] = parsed[i].replace(" ", "")
+    print("parsed", parsed)
+    return parsed
 
 class State(rx.State):
     mode: bool = True
     is_uploading: bool
     option: str = "No selection yet."
     img: str = "ex_gfp_fungi.jpg"
-    imgs: List[str] = [
-        "another_random.jpg",
-    ]
-    all_image_paths : str
+    imgsFromLocalStorage = localStorage.getItem("images")
+    imgs: List[str]
 
     # this is a computed var that cant be modified
     @rx.var
     def file_list(self) -> str:
         """Get the names of each file as a list of strings."""
         return os.listdir(rx.get_asset_path())
+    @rx.var
+    def get_imgs_for_responsive_grid(self) -> List[str]:
+        """Get the list of images from local storage.images, which is a string that looks like a list."""
+        storedList = cvt_str_to_list(self.imgsFromLocalStorage)
+        print(storedList)
+        print(type(storedList))
+        return storedList
     
     #helpful button to clear local storage
     def clear_local_storage(self):
@@ -65,11 +77,12 @@ class State(rx.State):
     
     #dummy func
     def dummy(self):
+        print(State.imgsFromLocalStorage)
         return 
     
-    @rx.var
-    def get_local_storage_dir(self) -> str:
-        return "\n\n".join(self.all_image_paths)
+    # @rx.var
+    # def get_local_storage_dir(self) -> str:
+    #     return "\n\n".join(self.all_image_paths)
     
     # @rx.var
     # def get_local_storage_dir_list(self) -> List[str]:
@@ -83,6 +96,20 @@ class State(rx.State):
             # Save the file.
             with open(outfile, "wb") as file_object:
                 file_object.write(upload_data)
+        oldList = self.imgsFromLocalStorage
+        print("old list", oldList)
+        print("new file", file.filename)
+        oldList.append(file.filename)
+        # try: 
+        #     print("old list", oldList)
+        #     oldList.append(file.filename)
+        # except: #when oldList starts out as empty
+        #     print("must start tempList from scratch")
+        #     print("thing to add:", file.filename)
+        #     oldList = [file.filename]
+        print("dump the whole list u are about to update it with, should have the new one", json.dumps(oldList)) #templist is updating properly
+        localStorage.setItem("images", json.dumps(oldList))
+        print("imgs from local storage state variable", self.imgsFromLocalStorage) #has this updated?
     
     def update_image_list(self):
         storedList = localStorage.getItem("images")
@@ -106,15 +133,12 @@ def index():
                 rx.button("dark", 
                             background_image="moon.png",
                             on_click=State.toggle_mode()),
-                rx.heading("Welcome to Image Theory!", font_size="5em"),
-                rx.text("What does your image look like in another color space?",
-                        background_image="linear-gradient(271.3deg, #4500FF 15%, #FF0000 30%, #FFD100 30%, #00FFEE 70%, #FF00FB 15%)",
-                        background_clip="text",
-                        font_size="3em"
-                ),
-                padding_top="5%"
+                rx.heading("Image Theory!", font_size="5em"),
+                rx.image(src="text4.png", width = "auto", height = "auto"),
+                padding_top="2%",
             ),
             #upload image and change color space left and right
+            rx.text(State.get_imgs_for_responsive_grid),
             rx.hstack(
                 #upload image left stack
                 rx.vstack(
@@ -212,13 +236,9 @@ def index():
                 rx.button("light", 
                             background_image="sun.png",
                             on_click=State.toggle_mode()),
-                rx.heading("Welcome to Image Theory!", font_size="5em"),
-                rx.text("What does your image look like in another color space?",
-                        background_image="linear-gradient(271.3deg, #4500FF 15%, #FF0000 30%, #FFD100 30%, #00FFEE 70%, #FF00FB 15%)",
-                        background_clip="text",
-                        font_size="3em"
-                ),
-                padding_top="5%"
+                rx.heading("Image Theory", font_size="5em"),
+                rx.image(src="dark_text2.png", width = "auto", height = "auto"),
+                padding_top="2%"
             ),
             #upload image and change color space left and right
             rx.hstack(
