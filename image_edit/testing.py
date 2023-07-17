@@ -229,3 +229,13 @@ def index():
 app = rx.App(state=State)
 app.add_page(index)
 app.compile()
+
+
+
+
+
+# color mode button functionality:
+# button has an image, the whole pc.center has a style
+# if you click the button, the action is toggling the image 
+# of the button and the whole screen's style
+
